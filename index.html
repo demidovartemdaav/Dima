@@ -49,15 +49,28 @@
   #sysbtns button{margin:0;padding:6px 8px;box-shadow:none;font-size:0;background:rgba(12,18,12,.6);border:1px solid rgba(160,200,120,.4)}
   #sysbtns button:hover{background:rgba(30,50,28,.8);transform:none}
   #sysbtns svg{width:20px;height:20px;fill:#c9dcb0;display:block}
+  /* тач-кнопки: аркадный вид, SVG-стрелки, рывок янтарным */
   #touch{display:none;position:absolute;inset:auto 0 0 0;height:26%;z-index:6;pointer-events:none}
   #touch.on{display:flex;justify-content:space-between;align-items:flex-end;padding:0 3% 3%}
-  #touch .pad{display:flex;gap:12px;pointer-events:auto}
-  #touch .tbtn{width:72px;height:72px;border-radius:50%;background:rgba(18,28,16,.55);
-    border:2px solid rgba(170,210,120,.6);color:#d5e3bc;font-family:'Handjet';font-size:30px;
-    display:flex;align-items:center;justify-content:center;user-select:none;touch-action:none}
-  #touch .tbtn:active{background:rgba(60,100,40,.75)}
-  #touch .tbtn.jump{width:88px;height:88px}
-  /* оверлей поворота — с кнопкой принудительного разворота */
+  #touch .pad{display:flex;gap:14px;align-items:flex-end;pointer-events:auto}
+  #touch .tbtn{width:66px;height:66px;border-radius:50%;position:relative;
+    background:rgba(12,20,12,.62);
+    border:2px solid rgba(140,190,90,.55);
+    box-shadow:inset 0 3px 0 rgba(255,255,255,.10), inset 0 -5px 0 rgba(0,0,0,.35), 0 4px 10px rgba(0,0,0,.4);
+    display:flex;align-items:center;justify-content:center;
+    user-select:none;touch-action:none;transition:transform .06s}
+  #touch .tbtn svg{width:32px;height:32px;fill:#cfe6ae;filter:drop-shadow(0 2px 0 rgba(0,0,0,.5))}
+  #touch .tbtn .lbl{position:absolute;bottom:5px;left:0;right:0;text-align:center;
+    font-size:12px;letter-spacing:.14em;color:#8fae7a;font-family:'Handjet',monospace}
+  #touch .tbtn:active{background:rgba(48,88,36,.88);border-color:#a8d97a;transform:scale(.93);
+    box-shadow:inset 0 2px 0 rgba(255,255,255,.14), inset 0 -2px 0 rgba(0,0,0,.3)}
+  #touch .tbtn.jump{width:90px;height:90px;border-color:rgba(168,217,122,.75)}
+  #touch .tbtn.jump svg{width:42px;height:42px}
+  #touch .tbtn.jump .lbl{color:#a8d97a}
+  #touch .tbtn.rush{border-color:rgba(240,200,90,.6)}
+  #touch .tbtn.rush svg{fill:#f0d98a}
+  #touch .tbtn.rush .lbl{color:#c9b06a}
+  /* оверлей поворота */
   #rotate{display:none;position:fixed;inset:0;z-index:60;background:#0b0e13;color:#e8e2d2;
     font-family:'Handjet',monospace;flex-direction:column;align-items:center;justify-content:center;
     gap:16px;text-align:center;padding:24px}
@@ -85,8 +98,14 @@
     <button id="btnPause" title="Пауза (P)" style="display:none"><svg viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z"/></svg></button>
   </div>
   <div id="touch">
-    <div class="pad"><div class="tbtn" id="tL">◄</div><div class="tbtn" id="tR">►</div></div>
-    <div class="pad"><div class="tbtn jump" id="tJ">▲</div></div>
+    <div class="pad">
+      <div class="tbtn dir" id="tL"><svg viewBox="0 0 24 24"><path d="M16 4 L6 12 L16 20 Z"/></svg></div>
+      <div class="tbtn dir" id="tR"><svg viewBox="0 0 24 24"><path d="M8 4 L18 12 L8 20 Z"/></svg></div>
+      <div class="tbtn rush" id="tRush"><svg viewBox="0 0 24 24"><path d="M3.5 4 L11 12 L3.5 20 Z M12 4 L19.5 12 L12 20 Z"/></svg><span class="lbl">РЫВОК</span></div>
+    </div>
+    <div class="pad">
+      <div class="tbtn jump" id="tJ"><svg viewBox="0 0 24 24"><path d="M4 16.5 L12 6.5 L20 16.5 Z"/></svg><span class="lbl">ПРЫЖОК</span></div>
+    </div>
   </div>
 
   <div id="ui">
@@ -161,7 +180,7 @@ function updOrientation(){
 updOrientation();
 window.addEventListener('resize',updOrientation);
 window.addEventListener('orientationchange',function(){setTimeout(updOrientation,150);});
-setInterval(updOrientation,500);   /* подстраховка: не все браузеры шлют resize */
+setInterval(updOrientation,500);
 
 /* ============================== БАЗА ============================== */
 const cvs=document.getElementById('game'), ctx=cvs.getContext('2d');
@@ -212,10 +231,8 @@ function goFullscreen(){
     try{const pr=screen.orientation.lock('landscape');if(pr&&pr.catch)pr.catch(function(){});}catch(e){}
   }
 }
-/* кнопка в оверлее поворота */
 document.getElementById('btnRotate').addEventListener('click',function(){
   goFullscreen();
-  /* если через 0.9с экран не развернулся — пропускаем в портрет */
   setTimeout(function(){
     if(window.innerHeight>window.innerWidth){rotateDismissed=true;updOrientation();}
   },900);
@@ -893,6 +910,7 @@ function bindTouch(id,down,up){
 }
 bindTouch('tL',()=>{keys.left=true;},()=>{keys.left=false;});
 bindTouch('tR',()=>{keys.right=true;},()=>{keys.right=false;});
+bindTouch('tRush',()=>{keys.run=true;},()=>{keys.run=false;});
 bindTouch('tJ',()=>{keys.jump=true;jumpPressed=true;Snd.ensure();},()=>{keys.jump=false;});
 if(IS_TOUCH)document.getElementById('touch').classList.add('on');
 
