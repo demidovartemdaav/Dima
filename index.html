@@ -57,15 +57,20 @@
     display:flex;align-items:center;justify-content:center;user-select:none;touch-action:none}
   #touch .tbtn:active{background:rgba(60,100,40,.75)}
   #touch .tbtn.jump{width:88px;height:88px}
+  /* оверлей поворота — с кнопкой принудительного разворота */
   #rotate{display:none;position:fixed;inset:0;z-index:60;background:#0b0e13;color:#e8e2d2;
     font-family:'Handjet',monospace;flex-direction:column;align-items:center;justify-content:center;
-    gap:18px;text-align:center;padding:24px}
+    gap:16px;text-align:center;padding:24px}
   body.touch.portrait #rotate{display:flex}
   #rotate .msg{font-size:36px;letter-spacing:.15em;font-weight:900}
   #rotate .hint2{font-size:20px;color:#9aa58f;letter-spacing:.08em}
   #rotate .ph{width:52px;height:88px;border:4px solid #8ecf6a;border-radius:10px;
     animation:rot 1.8s ease-in-out infinite}
   @keyframes rot{0%,25%{transform:rotate(0)}70%,100%{transform:rotate(90deg)}}
+  #rotate button{margin:0;font-size:clamp(18px,3.2vh,26px)}
+  #rotate .skip{font-size:16px;color:#7d8a74;letter-spacing:.1em;cursor:pointer;
+    border-bottom:1px dashed #4a5443;padding-bottom:2px;user-select:none}
+  #rotate .skip:active{color:#a8d97a}
   #errbox{display:none;position:fixed;left:0;right:0;bottom:0;z-index:99;background:#7a1f1f;
     color:#ffe3e3;font-family:monospace;font-size:12px;padding:8px 12px;word-break:break-all}
 </style>
@@ -131,7 +136,9 @@
 <div id="rotate">
   <div class="ph"></div>
   <div class="msg">ПОВЕРНИ ТЕЛЕФОН</div>
-  <div class="hint2">играется только горизонтально</div>
+  <div class="hint2">или разверни экран кнопкой</div>
+  <button id="btnRotate">ВО ВЕСЬ ЭКРАН</button>
+  <div class="skip" id="skipRotate">продолжить как есть</div>
 </div>
 <div id="errbox"></div>
 
@@ -143,14 +150,18 @@ window.addEventListener('error',function(e){
   b.style.display='block';
   b.textContent='ОШИБКА: '+(e.message||'неизвестная')+(e.lineno?(' · строка '+e.lineno):'');
 });
+/* ---- мобильные флаги ---- */
 const IS_TOUCH=!!(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
 if(IS_TOUCH)document.body.classList.add('touch');
+let rotateDismissed=false;
 function updOrientation(){
-  document.body.classList.toggle('portrait',window.innerHeight>window.innerWidth);
+  const portrait=window.innerHeight>window.innerWidth;
+  document.body.classList.toggle('portrait',portrait&&!rotateDismissed);
 }
 updOrientation();
 window.addEventListener('resize',updOrientation);
 window.addEventListener('orientationchange',function(){setTimeout(updOrientation,150);});
+setInterval(updOrientation,500);   /* подстраховка: не все браузеры шлют resize */
 
 /* ============================== БАЗА ============================== */
 const cvs=document.getElementById('game'), ctx=cvs.getContext('2d');
@@ -201,6 +212,17 @@ function goFullscreen(){
     try{const pr=screen.orientation.lock('landscape');if(pr&&pr.catch)pr.catch(function(){});}catch(e){}
   }
 }
+/* кнопка в оверлее поворота */
+document.getElementById('btnRotate').addEventListener('click',function(){
+  goFullscreen();
+  /* если через 0.9с экран не развернулся — пропускаем в портрет */
+  setTimeout(function(){
+    if(window.innerHeight>window.innerWidth){rotateDismissed=true;updOrientation();}
+  },900);
+});
+document.getElementById('skipRotate').addEventListener('click',function(){
+  rotateDismissed=true;updOrientation();
+});
 
 /* ============================== ЗВУК ============================== */
 const midi=n=>440*Math.pow(2,(n-69)/12);
@@ -277,7 +299,7 @@ const Snd={
   }
 };
 
-/* ============================== СПРАЙТЫ (16-бит, пиксель 2px) ============================== */
+/* ============================== СПРАЙТЫ ============================== */
 function spr(rows,pal,s){
   s=s||2;
   let w=0;for(const r of rows)w=Math.max(w,r.length);
@@ -317,7 +339,6 @@ function flipped(c){
 }
 const pair=(rows,pal)=>{const r=outlineSpr(spr(rows,pal,2),2);return{r:r,l:flipped(r)};};
 
-/* Димон */
 const DP={r:'#a03340',k:'#4a1017',h:'#2a1a10',s:'#ecc094',S:'#d09a68',e:'#f5f5f0',o:'#20242a',
   b:'#35754a',C:'#245336',w:'#ecebe2',g:'#3d4557',G:'#2e3444',f:'#e8e6dc',d:'#a8a89c',m:'#ecc094'};
 const TOPB=[
@@ -403,7 +424,6 @@ const D_JUMP=pair(HEADJ.concat([
 "..................",
 ".................."]),DP);
 
-/* самокатчик */
 const SCOP={k:'#454550',s:'#e6b183',e:'#f2f2ea',o:'#161616',h:'#7a5540',H:'#5e4030',
   p:'#3b4a5e',m:'#e6b183',a:'#c0c6cc',d:'#e0822f',D:'#b05f1c',w:'#2a2a30',x:'#8a8a94'};
 const SCTOP2=[
@@ -450,7 +470,6 @@ const S_B=pair(SCTOP2.slice(0,12).concat([
 "......................",
 "......................"]),SCOP);
 
-/* коп */
 const CP={c:'#2b4a75',v:'#182c46',y:'#f0c84a',s:'#e6b183',S:'#c89868',e:'#f2f2ea',o:'#161616',
   b:'#3a6288',m:'#e6b183',d:'#8a5b30',t:'#252a36',f:'#1c1c20'};
 const CTOPB=[
@@ -490,7 +509,6 @@ const C_B=pair(CTOPB.concat([
 "fff...........fff.",
 "ddd...........ddd."]),CP);
 
-/* гриб силы */
 const MUSH=outlineSpr(spr([
 "......rrrrrr......",
 "....rrrrwwrrrr....",
@@ -512,7 +530,6 @@ const MUSH=outlineSpr(spr([
 "......ffffff......"
 ],{r:'#d9453a',w:'#f2ead3',f:'#ecd9b8',e:'#2a2a2a'}),2);
 
-/* принцесса */
 const PRI=[
 "....c..c..c.......",
 "....ccccccc.......",
@@ -545,7 +562,6 @@ const PR_R=outlineSpr(spr(PRI,{c:'#f0c84a',h:'#3a2417',s:'#e6b183',S:'#c89868',e
   p:'#e8b7c8',P:'#c885a0',m:'#e6b183'}),2);
 const PR_L=flipped(PR_R);
 
-/* лист */
 const LEAF=outlineSpr(spr([
 ".......gg.........",
 "..g....gg....g....",
@@ -578,7 +594,6 @@ const HEART=outlineSpr(spr([
 ".....hh....."
 ],{h:'#e5484d',w:'#f7a6ab'}),2);
 
-/* кость */
 const BONE=outlineSpr(spr([
 "w...wwwwww...w",
 "wwwwwwwwwwwwww",
@@ -586,7 +601,6 @@ const BONE=outlineSpr(spr([
 "w...wwwwww...w"
 ],{w:'#f2ead3'}),3);
 
-/* гончая */
 const DOGP={r:'#c8722e',R:'#a3551e',w:'#f2e6cc',e:'#20242a',p:'#8a4a1a'};
 const DOG_A=pair([
 "....................rrr...",
