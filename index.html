@@ -1145,6 +1145,9 @@ function updatePlayer(dt){
   p.ice=foot==='i';
   const acc=p.ice?420:1900, fric=p.ice?70:2300, max=keys.run?390:265;
   let ax=0;if(keys.left)ax-=1;if(keys.right)ax+=1;
+    /* мобильный рывок — самостоятельная кнопка бега:
+     если стрелки не зажаты, Димон несётся в сторону взгляда на полной скорости */
+  if(ax===0&&keys.run&&IS_TOUCH)ax=p.face;
   if(ax!==0){p.vx+=ax*acc*dt;p.face=ax;}
   else{p.vx-=clamp(p.vx,-fric*dt,fric*dt);}
   p.vx=clamp(p.vx,-max,max);
