@@ -788,10 +788,10 @@ function updatePlayer(dt){
     if(aabb(p,e)){
       if(p.vy>60&&(p.y+p.h)-e.y<30){
         e.dead=true;e.deadT=0;p.vy=-490;game.score+=200;Snd.sfx('stomp');
-        addText(e.type==='cop'?'В ОТСТАВКУ!':['МОЙ САМОКАТ!','Э!','АШЧИБУР!'][Math.floor(Math.random()*3)],
+        addText(e.type==='cop'?'В ОТСТАВКУ!':['ХУЯК!','Э БЛЯ!','УШЛЁПОК!'][Math.floor(Math.random()*3)],
           e.x-10,e.y-24,'#f2ead3',26);
         for(let i=0;i<8;i++)world.particles.push({type:'spark',x:e.x+14,y:e.y+8,
-          vx:(Math.random()-.5)*260,vy:-Math.random()*180,life:.5,max:.5});
+          vx:(Math.random()-.5)*260,vy:-Math.random()*180,life:.10,max:.10});
       }else hurtPlayer(e);
     }
   }
@@ -833,7 +833,7 @@ function updateEnemies(dt){
         const s=dx>0?1:-1;
         world.projectiles.push({x:e.x+e.w/2+s*18,y:e.y+18,vx:s*330,vy:-60,life:3,dead:false});
         Snd.sfx('throw');
-        addText(['СТОЯТЬ!','ДЕРЖИ ЕГО!','В ПОГОНЮ!'][Math.floor(Math.random()*3)],e.x-8,e.y-24,'#ffd98a',26);
+        addText(['СТОЯТЬ!','ДЕРЖИ ЕГО!','МОЛОДОЙ ЧЕЛОВЕК!'][Math.floor(Math.random()*3)],e.x-8,e.y-24,'#ffd98a',26);
       }
     }
     /* пыль из-под колеса */
@@ -901,7 +901,7 @@ function update(dt){
       if(game.stateT>1.6){
         if(game.afterDeath==='gameover'){
           game.state='gameover';Snd.stopMusic();clearSave();
-          $('overStats').innerHTML='СЧЁТ: '+game.score+' · ЛИСТКОВ: '+game.leaves;
+          $('overStats').innerHTML='СЧЁТ: '+game.score+' · КОСЯКОВ: '+game.leaves;
           showScreen('scrOver');
         }else loadLevel(game.level,true);
       }break;
@@ -927,11 +927,11 @@ function update(dt){
           Snd.happy=true;Snd.startMusic();Snd.sfx('flag');
           world.wH=0;world.wC=0;
           const tot=game.allLeaves.reduce((a,b)=>a+b,0);
-          $('finStats').innerHTML='ЛИСТЬЯ: '+game.leaves+' / '+tot+'<br>СЧЁТ: '+game.score;
+          $('finStats').innerHTML='КОСЯКИ: '+game.leaves+' / '+tot+'<br>СЧЁТ: '+game.score;
           showScreen('scrFinal');
         }else{
           game.state='levelwin';
-          $('winStats').innerHTML='ЛИСТКОВ: '+world.coins.filter(c=>c.taken).length+' / '+world.levelLeaves
+          $('winStats').innerHTML='КОСЯКОВ: '+world.coins.filter(c=>c.taken).length+' / '+world.levelLeaves
             +'<br>СЧЁТ: '+game.score;
           showScreen('scrWin');
         }
